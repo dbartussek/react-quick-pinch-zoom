@@ -125,6 +125,8 @@ class PinchZoom extends Component<Props> {
     onZoomEnd: noup,
     onZoomStart: noup,
     onZoomUpdate: noup,
+    onSwipeLeft: noup,
+    onSwipeRight: noup,
     setOffsetsOnce: false,
     shouldInterceptWheel,
     shouldCancelHandledTouchEndEvents: false,
@@ -162,6 +164,15 @@ class PinchZoom extends Component<Props> {
   private _wheelTimeOut: NodeJS.Timeout | null = null;
   private _zoomFactor: number = 1;
   private _initialZoomFactor: number = 1;
+  private _swipeX : number = 0;
+  private _swipeY : number = 0;
+  private _swipeTime : number = 0;
+  private _swipeDistX : number = 0;
+  private _swipeDistY : number = 0;
+  private _swipeThreshold: number = 150;
+  private _swipeRestraint: number = 100;
+  private _swipeAllowedTime: number = 300;
+  private _swipeElapsedTime: number;
   private _draggingPoint: Point = { ...zeroPoint };
   // It help reduce behavior difference between touch and mouse events
   private _ignoreNextClick: boolean = false;
@@ -843,6 +854,22 @@ class PinchZoom extends Component<Props> {
     this._setInteraction(null, event);
   }
 
+  private _canSwipe(event: TouchEvent) {
+    return event.changedTouches ? true : false;
+  }
+
+  private _swipeTouchStart(event: TouchEvent) {
+
+    let touch = event.changedTouches[0]
+
+    // @ts-ignore
+    this._swipeX = touch.pageX
+    // @ts-ignore
+    this._swipeY = touch.pageY
+    this._swipeTime = new Date().getTime()
+    event.preventDefault()
+  }
+
   private _detectDoubleTap(event: TouchEvent) {
     const time = new Date().getTime();
 
@@ -869,6 +896,56 @@ class PinchZoom extends Component<Props> {
     }
   }
 
+  private _handleSwipe(swipe : any) {
+    if (swipe === null) {
+      return;
+    }
+
+    if (swipe === 'left') {
+      this.props.onSwipeRight();
+    }
+
+    if (swipe === 'right') {
+      this.props.onSwipeLeft();
+    }
+
+    this.scaleTo({x: 0, y: 0, scale: 1});
+    this._resetInertia();
+  }
+
+  private _resetSwipeVariable() {
+    this._swipeX = 0;
+    this._swipeY = 0;
+    this._swipeTime = 0;
+    this._swipeDistX = 0;
+    this._swipeDistY = 0;
+    this._swipeThreshold = 150;
+    this._swipeRestraint = 100;
+    this._swipeAllowedTime = 300;
+    this._swipeElapsedTime = 0;
+  }
+
+  private _endTouchSwipe(event : TouchEvent) {
+    let touch = event.changedTouches[0];
+
+    // @ts-ignore
+    this._swipeDistX = touch.pageX - this._swipeX
+    // @ts-ignore
+    this._swipeDistY = touch.pageY - this._swipeY
+    this._swipeElapsedTime = new Date().getTime() - this._swipeTime;
+    let swipe = null;
+
+    if (this._swipeElapsedTime <= this._swipeAllowedTime) {
+      if (Math.abs(this._swipeDistX) >= this._swipeThreshold && Math.abs(this._swipeDistY) <= this._swipeRestraint) {
+        swipe = (this._swipeDistX < 0) ? 'left' : 'right';
+      }
+    }
+    this._handleSwipe(swipe)
+    this._resetSwipeVariable();
+
+    cancelEvent(event);
+  }
+
   private _handlerOnTouchEnd = this._handlerIfEnable(
     (touchEndEvent: TouchEvent) => {
       this._fingers = touchEndEvent.touches.length;
@@ -887,6 +964,10 @@ class PinchZoom extends Component<Props> {
         this._handleClick(touchEndEvent);
       }
 
+      if (this._canSwipe(touchEndEvent )) {
+        this._endTouchSwipe(touchEndEvent );
+      }
+
       this._updateInteraction(touchEndEvent);
     },
   );
@@ -895,6 +976,11 @@ class PinchZoom extends Component<Props> {
     (touchStartEvent: TouchEvent) => {
       this._firstMove = true;
       this._fingers = touchStartEvent.touches.length;
+
+      if (this._canSwipe(touchStartEvent)) {
+        this._swipeTouchStart(touchStartEvent);
+      }
+
       this._detectDoubleTap(touchStartEvent);
     },
   );
@@ -1092,6 +1178,8 @@ if (process.env.NODE_ENV !== 'production') {
     onZoomEnd: func,
     onZoomStart: func,
     onZoomUpdate: func,
+    onSwipeLeft: func,
+    onSwipeRight: func,
     setOffsetsOnce: bool,
     tapZoomFactor: number,
     verticalPadding: number,

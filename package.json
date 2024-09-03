@@ -62,9 +62,9 @@
     "!*.test.*"
   ],
   "description": "A react component that providing multi-touch gestures for zooming and dragging on any DOM element.",
-  "author": "David Nrb <offantik@gmail.com>",
+  "author": "David Nrb <offantik@gmail.com>, swipe added by K3ler <ikeler1@gmail.com>",
   "license": "MIT",
-  "repository": "retyui/react-quick-pinch-zoom",
+  "repository": "dbartussek/react-quick-pinch-zoom",
   "keywords": [
     "drag",
     "gesture",
