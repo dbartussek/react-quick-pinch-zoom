@@ -908,9 +908,6 @@ class PinchZoom extends Component<Props> {
     if (swipe === 'right') {
       this.props.onSwipeLeft();
     }
-
-    this.scaleTo({x: 0, y: 0, scale: 1});
-    this._resetInertia();
   }
 
   private _resetSwipeVariable() {
