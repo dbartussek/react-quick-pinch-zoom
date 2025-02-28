@@ -1150,7 +1150,7 @@ class PinchZoom extends Component<Props> {
   }
 }
 
-if (process.env.NODE_ENV !== 'production') {
+if (false && process.env.NODE_ENV !== 'production') {
   const { any, element, object, number, func, bool } = require('prop-types');
 
   // @ts-ignore
